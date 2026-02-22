@@ -110,13 +110,15 @@ module UsersHelper
     span_if_current ts('Gifts (%{gift_number})', gift_number: gift_number.to_s), user_gifts_path(user)
   end
 
-  def authored_items(pseud, work_counts = {}, rec_counts = {})
-    visible_works = pseud.respond_to?(:work_count) ? pseud.work_count.to_i : (work_counts[pseud.id] || 0)
-    visible_recs = pseud.respond_to?(:rec_count) ? pseud.rec_count.to_i : (rec_counts[pseud.id] || 0)
-    items = visible_works == 1 ? link_to(visible_works.to_s + ' work', user_pseud_works_path(pseud.user, pseud)) : (visible_works > 1 ? link_to(visible_works.to_s + ' works', user_pseud_works_path(pseud.user, pseud)) : '')
-    items += ', ' if (visible_works > 0) && (visible_recs > 0)
-    if visible_recs > 0
-      items += visible_recs == 1 ? link_to(visible_recs.to_s + ' rec', user_pseud_bookmarks_path(pseud.user, pseud, recs_only: true)) : link_to(visible_recs.to_s + ' recs', user_pseud_bookmarks_path(pseud.user, pseud, recs_only: true))
+  def authored_items(pseud)
+    visible_works = SearchCounts.work_count_for_pseud(pseud)
+    visible_bookmarks = SearchCounts.bookmark_count_for_pseud(pseud)
+    label_works = ts(pluralize(visible_works, 'work'))
+    items = visible_works > 0 ? link_to(label_works, user_pseud_works_path(pseud.user, pseud)) : ''
+    items += ', ' if (visible_works > 0) && (visible_bookmarks > 0)
+    if visible_bookmarks > 0
+      label_bookmarks = ts(pluralize(visible_bookmarks, 'bookmark'))
+      items += link_to(label_bookmarks, user_pseud_bookmarks_path(pseud.user, pseud))
     end
     items.html_safe
   end
